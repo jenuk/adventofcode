@@ -1,28 +1,22 @@
 import numpy as np
 import pandas as pd
 
-def task1(direction, amount):
-    return np.product(amount @ direction)
+def task1(data):
+    return np.product(np.sum(data, axis=0))
 
-def task2(direction, amount):
-    aim = np.cumsum(amount * direction[:, 1])
-    horizontal = amount @ direction[:, 0]
-    depth = (aim * amount) @ direction[:, 0]
-
-    return horizontal*depth
-
+def task2(data):
+    aim = np.cumsum(data[:, 1])
+    return np.sum(data[:, 0]) * np.sum(data[:, 0] * aim)
 
 if __name__ == '__main__':
     df = pd.read_csv("input.txt", header=None, sep=" ")
 
-    direction = df[0].to_list()
-    def dir_to_vec(d):
-        return [d == "forward", (d == "down") - (d == "up")]
-    direction = np.array(list(map(dir_to_vec, direction)))
-    amount = df[1].to_numpy()
+    def inner(d):
+        return [d[1]*(d[0]=="forward"), d[1]*((d[0]=="down") - (d[0]=="up"))]
+    data = df.apply(inner, axis=1, result_type="expand").to_numpy()
 
-    res1 = task1(direction, amount)
-    res2 = task2(direction, amount)
+    res1 = task1(data)
+    res2 = task2(data)
 
     print(f"Task1: {res1}")
     print(f"Task2: {res2}")
