@@ -76,7 +76,7 @@ int task2(std::ifstream& file) {
 
             split(lines_co2, k, ones, zeros);
 
-            lines_co2 = ones.size() >= zeros.size() ? ones : zeros;
+            lines_co2 = ones.size() < zeros.size() ? ones : zeros;
         }
 
         if (lines_oxy.size() > 1) {
@@ -85,8 +85,7 @@ int task2(std::ifstream& file) {
 
             split(lines_oxy, k, ones, zeros);
 
-            lines_oxy = zeros.empty() or ((ones.size() > 0)
-                        and ones.size() < zeros.size()) ? ones : zeros;
+            lines_oxy = ones.size() >= zeros.size() ? ones : zeros;
         }
 
         co2 = (co2 << 1) + (lines_co2[0][k] == '1' ? 1 : 0);
