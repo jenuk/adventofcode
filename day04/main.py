@@ -7,58 +7,43 @@ def read_data(filename):
     data = data.split("\n\n")
     nums = list(map(int, data[0].split(",")))
     data = data[1:]
-    data = [[x.replace("  ", " ").strip().split(" ") for x in bingo.strip().split("\n")] for bingo in data]
+    data = [[x.split() for x in bingo.strip().split("\n")] for bingo in data]
     data = np.array(data, dtype=int)
 
     return nums, data
 
-def task1(nums, data):
+
+def get_scores(nums, data):
     marked = np.zeros_like(data, dtype=bool)
+    scores = np.zeros(data.shape[0], dtype=int)
+    start = 0
+
     for num in nums:
         marked[data == num] = True
 
-        inds = np.max(np.sum(marked, axis=1), axis=1) == marked.shape[2]
-        if inds.any():
-            i = np.nonzero(inds)
-            return np.sum(data[i][~marked[i]]) * num
-            
-        inds = np.max(np.sum(marked, axis=2), axis=1) == marked.shape[2]
-        if inds.any():
-            i = np.nonzero(inds)
-            return np.sum(data[i][~marked[i]]) * num
-
-    raise ValueError("No winning board found")
-
-
-def task2(nums, data):
-    marked = np.zeros_like(data, dtype=bool)
-    for num in nums:
-        marked[data == num] = True
-
-        inds = np.max(np.sum(marked, axis=1), axis=1) != marked.shape[2]
-        if not inds.all():
-            if data.shape[0] == 1:
-                return np.sum(data[0][~marked[0]]) * num
+        def check(d):
+            inds = np.max(np.sum(marked, axis=d), axis=1) == marked.shape[d]
+            if inds.any():
+                pos = np.arange(marked.shape[0])[inds]
+                end = start + pos.shape[0]
+                scores[start:end] = np.sum(data[pos] * ~marked[pos], axis=(1,2)) * num
+                return end, data[~inds], marked[~inds]
             else:
-                data = data[inds]
-                marked = marked[inds]
-            
+                return start, data, marked
 
-        inds = np.max(np.sum(marked, axis=2), axis=1) != marked.shape[2]
-        if not inds.all():
-            if data.shape[0] == 1:
-                return np.sum(data[0][~marked[0]]) * num
-            else:
-                data = data[inds]
-                marked = marked[inds]
+        start, data, marked = check(1)
+        start, data, marked = check(2)
 
-    raise ValueError("Not all boards win")
+    return scores
+
 
 if __name__ == '__main__':
     nums, data = read_data("input.txt")
+    
+    scores = get_scores(nums, data)
 
-    res1 = task1(nums, data)
-    res2 = task2(nums, data)
+    res1 = scores[0]
+    res2 = scores[-1]
 
     print(f"Task1: {res1}")
     print(f"Task2: {res2}")
