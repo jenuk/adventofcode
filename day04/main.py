@@ -13,17 +13,19 @@ def read_data(filename):
     return nums, data
 
 def task1(nums, data):
-    marked = np.zeros_like(data)
+    marked = np.zeros_like(data, dtype=bool)
     for num in nums:
-        marked[data == num] = 1
+        marked[data == num] = True
 
         inds = np.max(np.sum(marked, axis=1), axis=1) == marked.shape[2]
-        if np.sum(inds) > 0:
-            return np.sum(data[inds][np.logical_not(marked[inds])]) * num
+        if inds.any():
+            i = np.nonzero(inds)
+            return np.sum(data[i][~marked[i]]) * num
             
         inds = np.max(np.sum(marked, axis=2), axis=1) == marked.shape[2]
-        if np.sum(inds) > 0:
-            return np.sum(data[inds][np.logical_not(marked[inds])]) * num
+        if inds.any():
+            i = np.nonzero(inds)
+            return np.sum(data[i][~marked[i]]) * num
 
     raise ValueError("No winning board found")
 
@@ -31,21 +33,21 @@ def task1(nums, data):
 def task2(nums, data):
     marked = np.zeros_like(data, dtype=bool)
     for num in nums:
-        marked[data == num] = 1
+        marked[data == num] = True
 
         inds = np.max(np.sum(marked, axis=1), axis=1) != marked.shape[2]
-        if np.sum(inds) < data.shape[0]:
+        if not inds.all():
             if data.shape[0] == 1:
-                return np.sum(data[0][np.logical_not(marked[0])]) * num
+                return np.sum(data[0][~marked[0]]) * num
             else:
                 data = data[inds]
                 marked = marked[inds]
             
 
         inds = np.max(np.sum(marked, axis=2), axis=1) != marked.shape[2]
-        if np.sum(inds) < data.shape[0]:
+        if not inds.all():
             if data.shape[0] == 1:
-                return np.sum(data[0][np.logical_not(marked[0])]) * num
+                return np.sum(data[0][~marked[0]]) * num
             else:
                 data = data[inds]
                 marked = marked[inds]
