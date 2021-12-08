@@ -1,4 +1,5 @@
 import copy
+import re
 
 class Decrypt:
     combinations = (
@@ -28,13 +29,13 @@ class Decrypt:
 
 
     def test_number(self, code, number):
-        def test(code, possibilities):
+        def test(code, possibilities, used):
             # DFS to check if the number can be build by the possibilities
             if len(code) == 0:
                 return True
 
-            for segment in possibilities[code[0]]:
-                if test(code[1:], {p: possibilities[p] - {segment} for p in possibilities}):
+            for segment in possibilities[code[0]] - used:
+                if test(code[1:], possibilities, used | {segment}):
                     return True
 
             return False
@@ -51,7 +52,7 @@ class Decrypt:
 
         code = sorted(code, key=lambda a: len(possibilities[a]))
         
-        return test(code, possibilities)
+        return test(code, possibilities, set())
 
 
     def check_code(self, code):
@@ -79,13 +80,11 @@ class Decrypt:
                     self.possibilities[other] -= self.possibilities[wire]
 
         # two wires connect to only two segments
-        for wire1 in self.letters:
+        for k, wire1 in enumerate(self.letters):
             if len(self.possibilities[wire1]) != 2:
                 continue
 
-            for wire2 in self.letters:
-                if wire1 == wire2 or len(self.possibilities[wire2]) != 2:
-                    continue
+            for wire2 in self.letters[k+1:]:
                 if self.possibilities[wire1] != self.possibilities[wire2]:
                     continue
 
@@ -125,15 +124,16 @@ class Decrypt:
 def read_data(filename):
     with open(filename) as file:
         content = file.readlines()
+
     content = [line.strip().split(" | ") for line in content]
-    inp =  [line[0].split() for line in content]
-    outp = [line[1].split() for line in content]
+    inp     = [re.sub("[a-g]{8} ", "", line[0]).split() for line in content]
+    outp    = [line[1].split() for line in content]
 
     return inp, outp
 
 
 def task1(inp, outp):
-    ls = map(len, (x for line in outp for x in line))
+    ls     = map(len, (x for line in outp for x in line))
     result = sum(map(lambda x: x in {2, 3, 4, 7,}, ls))
     return result
 
