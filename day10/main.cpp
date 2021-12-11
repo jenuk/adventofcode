@@ -7,105 +7,53 @@
 #include <unordered_map>
 #include <cstdint>
 
-std::vector<std::string> read_data(std::ifstream& file) {
-    std::vector<std::string> result = {};
-    std::string line;
 
-    while (file >> line) {
-        result.push_back(line);
-    }
+std::pair<int64_t, int64_t> task(std::string filename){
+    int64_t result1 = 0;
+    int64_t result2 = 0;
 
-    return result;
-}
-
-int task1(std::vector<std::string>& data){
-    int result = 0;
-
-    for (int k=0; k<data.size(); k++) {
-        std::vector<char> stack = {};
-
-        for (int i=0; i<data[k].size(); i++) {
-            if (data[k][i] == ')') {
-                if (stack.back() == '(') {
-                    stack.pop_back();
-                } else {
-                    result += 3;
-                    break;
-                }
-            } else if (data[k][i] == ']') {
-                if (stack.back() == '[') {
-                    stack.pop_back();
-                } else {
-                    result += 57;
-                    break;
-                }
-            } else if (data[k][i] == '}') {
-                if (stack.back() == '{') {
-                    stack.pop_back();
-                } else {
-                    result += 1197;
-                    break;
-                }
-            } else if (data[k][i] == '>') {
-                if (stack.back() == '<') {
-                    stack.pop_back();
-                } else {
-                    result += 25137;
-                    break;
-                }
-            } else {
-                stack.push_back(data[k][i]);
-            }
-        }
-    }
-
-    return result;
-}
-
-int64_t task2(std::vector<std::string>& data) {
+    std::unordered_map<char, char> pairs = {
+        {'(', ')'},
+        {'[', ']'},
+        {'{', '}'},
+        {'<', '>'},
+    };
+    
     std::unordered_map<char, int> values = {
-        {'(', 1},
-        {'[', 2},
-        {'{', 3},
-        {'<', 4},
+        {'(',     1},
+        {'[',     2},
+        {'{',     3},
+        {'<',     4},
+        {')',     3},
+        {']',    57},
+        {'}',  1197},
+        {'>', 25137},
     };
     std::vector<int64_t> scores;
 
-    for (int k=0; k<data.size(); k++) {
-        std::vector<char> stack = {};
-        bool corrupted = false;
+    std::ifstream file;
+    file.open("input.txt");
 
-        for (int i=0; i<data[k].size(); i++) {
-            if (data[k][i] == ')') {
-                if (stack.back() == '(') {
-                    stack.pop_back();
-                } else {
-                    corrupted = true;
-                    break;
-                }
-            } else if (data[k][i] == ']') {
-                if (stack.back() == '[') {
-                    stack.pop_back();
-                } else {
-                    corrupted = true;
-                    break;
-                }
-            } else if (data[k][i] == '}') {
-                if (stack.back() == '{') {
-                    stack.pop_back();
-                } else {
-                    corrupted = true;
-                    break;
-                }
-            } else if (data[k][i] == '>') {
-                if (stack.back() == '<') {
-                    stack.pop_back();
-                } else {
-                    corrupted = true;
-                    break;
-                }
+    std::string line;
+    std::vector<char> stack;
+    bool corrupted;
+
+    while (file >> line) {
+        stack.clear();
+        corrupted = false;
+
+        for (int i=0; i<line.size(); i++) {
+            if (line[i] == '(' or line[i] == '['
+                    or line[i] == '{' or line[i] == '<') {
+                stack.push_back(line[i]);
             } else {
-                stack.push_back(data[k][i]);
+                if (pairs[stack.back()] == line[i]) {
+                    stack.pop_back();
+                } else {
+                    result1 += values[line[i]];
+                    corrupted = true;
+                    break;
+                }
             }
         }
 
@@ -119,23 +67,20 @@ int64_t task2(std::vector<std::string>& data) {
         }
         scores.push_back(score);
     }
+    file.close();
 
     std::nth_element(scores.begin(), scores.begin()+scores.size()/2, scores.end());
-    return scores[scores.size()/2];
+    result2 = scores[scores.size()/2];
+
+    return std::make_pair(result1, result2);
 }
 
 
 int main() {
-    std::ifstream file;
-    file.open("input.txt");
-    std::vector<std::string> data = read_data(file);
-    file.close();
+    std::pair<int64_t, int64_t> res = task("input.txt");
 
-    int res1 = task1(data);
-    int64_t res2 = task2(data);
-
-    std::cout << res1 << "\n";
-    std::cout << res2 << std::endl;
+    std::cout << res.first << "\n";
+    std::cout << res.second << std::endl;
 
     return 0;
 }
