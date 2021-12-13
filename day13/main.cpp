@@ -4,17 +4,22 @@
 #include <vector>
 #include <utility>
 
+typedef std::vector<std::vector<bool>> Field;
+struct Operation {
+	char axis;
+	int val;
+};
 
-std::pair<std::vector<std::vector<bool>>, std::vector<std::pair<char, int>>> read_data(const std::string& filename) {
-    std::vector<std::vector<bool>>    field = {{false}};
-    std::vector<std::pair<char, int>> operations;
+std::pair<Field, std::vector<Operation>> read_data(const std::string& filename) {
+    Field field = {{false}};
+    std::vector<Operation> operations;
 
     std::ifstream file;
     file.open(filename);
     
     for (std::string line; std::getline(file, line);) {
         if (line[0] == 'f') {
-            operations.push_back(std::make_pair(line[11], std::stoi(line.substr(13))));
+            operations.push_back(Operation{line[11], std::stoi(line.substr(13))});
         } else if (line.size() > 0) {
             int k=0;
             while (k < line.size() and line[k] != ',') {
@@ -44,7 +49,7 @@ std::pair<std::vector<std::vector<bool>>, std::vector<std::pair<char, int>>> rea
 }
 
 
-void print(std::vector<std::vector<bool>> field) {
+void print(Field field) {
     for (int y=0; y < field[0].size(); y++) {
         for (int x=0; x < field.size(); x++) {
             std::cout << (field[x][y] ? '#' : '.');
@@ -55,11 +60,11 @@ void print(std::vector<std::vector<bool>> field) {
 }
 
 
-void apply_folds(std::vector<std::vector<bool>>& field, const std::vector<std::pair<char, int>>& ops) {
+void apply_folds(Field& field, const std::vector<Operation>& ops) {
     int axis;
     for (int k=0; k < ops.size(); k++) {
-        axis = ops[k].second;
-        if (ops[k].first == 'y') {
+        axis = ops[k].val;
+        if (ops[k].axis == 'y') {
             for (int x=0; x<field.size(); x++) {
                 for (int y=axis+1; y<field[x].size(); y++) {
                     if (field[x][y]) {
