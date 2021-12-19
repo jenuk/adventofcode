@@ -14,19 +14,35 @@ def read_scanners(filename):
 
     return scanners
 
-def make_rotations(scanner):
-    # scanner: (B, 3)
-    new = []
-    for sign1, sign2, sign3 in itertools.product([-1, 1], repeat=3):
-        for dim1 in {0, 1, 2}:
-            for dim2 in {0, 1, 2} - {dim1}:
-                for dim3 in {0, 1, 2} - {dim1, dim2}:
-                    v = np.zeros_like(scanner)
-                    v[:, 0] = sign1*scanner[:, dim1]
-                    v[:, 1] = sign2*scanner[:, dim2]
-                    v[:, 2] = sign3*scanner[:, dim3]
-                    new.append(v)
-    return np.stack(new)
+
+def gen_rotation_matrices():
+    matrices = [
+        # identity
+        np.array([[ 1, 0, 0], [ 0, 1, 0], [ 0, 0, 1]]),
+        # x-rotation
+        np.array([[ 1, 0, 0], [ 0, 0,-1], [ 0, 1, 0]]),
+        # y-rotation
+        np.array([[ 0, 0, 1], [ 0, 1, 0], [-1, 0, 0]]),
+        # z-rotation
+        np.array([[ 0,-1, 0], [ 1, 0, 0], [ 0, 0, 1]]),
+    ]
+
+    for _ in range(3):
+        for a in matrices:
+            for b in matrices:
+                x = a @ b
+                if not any(map(lambda u: np.all(u == x), matrices)):
+                    matrices.append(x)
+
+    return np.stack(matrices) # (24, 3, 3)
+
+
+def rotate(scanner, rotations):
+    # scanner (B, 3)
+    # rotations (24, 3, 3)
+    # add dimensions to make broadcasting work
+    return (rotations[:, None, :, :] @ scanner[None, :, :, None]).squeeze(3)
+
 
 def find_overlap(sc1, sc2):
     # assume sc1: [1, B1, 3]
@@ -45,6 +61,7 @@ def find_overlap(sc1, sc2):
 
     return None, None
 
+
 def calc_overlap(scanners):
     found = [(0, np.array([0, 0, 0]), 0)]
     done = {0}
@@ -54,6 +71,7 @@ def calc_overlap(scanners):
         print(found[i])
         idx, offset, rot = found[i]
         sc = scanners[idx][rot:rot+1] + offset
+
         for j in range(len(scanners)):
             if j in done:
                 continue
@@ -72,7 +90,8 @@ def calc_overlap(scanners):
 
 if __name__ == '__main__':
     scanners = read_scanners("input.txt")
-    scanners = [make_rotations(x) for x in scanners]
+    rotations = gen_rotation_matrices()
+    scanners = [rotate(sc, rotations) for sc in scanners]
     solution = calc_overlap(scanners)
     
     vecs = set()
