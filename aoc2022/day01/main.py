@@ -41,16 +41,16 @@ def task1(data):
 def task2(data):
     res = data[:3]
     res.sort()
+    x, y, z = res
     for cal in data[3:]:
-        if cal > res[0]:
-            if cal > res[2]:
-                res = [res[1], res[2], cal]
-            elif cal > res[1]:
-                res = [res[1], cal, res[2]]
+        if cal > x:
+            if cal > z:
+                y, z = z, cal
+            elif cal > y:
+                x, y = y, cal
             else:
-                res = [cal, res[1], res[2]]
-
-    return sum(res)
+                x = cal
+    return x + y + z
 
 
 def main():
