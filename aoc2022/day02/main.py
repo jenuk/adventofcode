@@ -33,20 +33,8 @@ def process_data(content):
 
 
 def score(player, computer):
-    if player == computer:
-        sc = 3 + computer
-    elif player > computer:
-        if player == 2 and computer == 0:
-            sc = 6 + computer
-        else:
-            sc = computer
-    else:
-        if player == 0 and computer == 2:
-            sc = computer
-        else:
-            sc = 6 + computer
-
-    return sc + 1
+    sc = (1 + computer - player) % 3
+    return 3*sc + 1 + computer
 
 
 def task1(data):
@@ -65,16 +53,8 @@ def task2(data):
     ox = ord("X")
     oa = ord("A")
     for p, c in data:
-        op, oc = ord(p) - oa, ord(c) - ox
-        if oc == 0:
-            oc = op - 1
-            if oc == -1: oc += 3
-        elif oc == 1:
-            oc = op
-        else:
-            oc = op + 1
-            if oc == 3: oc -= 3
-
+        op, strat = ord(p) - oa, ord(c) - ox - 1
+        oc = (op + strat) % 3
         result += score(op, oc)
 
     return result
