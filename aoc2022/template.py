@@ -31,6 +31,10 @@ def process_data(content):
     raise NotImplementedError()
 
 
+def check_data(data):
+    pass
+
+
 def task1(data):
     return 0
 
@@ -44,6 +48,7 @@ def main():
     fn = "input.txt"
     t0 = perf_counter_ns()
     data = read_data(fn)
+    check_data(data)
     t1 = perf_counter_ns()
     result1 = task1(data)
     t2 = perf_counter_ns()

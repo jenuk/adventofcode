@@ -32,6 +32,12 @@ def process_data(content):
     return [r.split(" ") for r in rounds]
 
 
+def check_data(data):
+    for a, b in data:
+        assert a in {"A", "B", "C"}
+        assert b in {"X", "Y", "Z"}
+
+
 def score(player, computer):
     sc = (1 + computer - player) % 3
     return 3*sc + 1 + computer
@@ -65,6 +71,7 @@ def main():
     fn = "input.txt"
     t0 = perf_counter_ns()
     data = read_data(fn)
+    check_data(data)
     t1 = perf_counter_ns()
     result1 = task1(data)
     t2 = perf_counter_ns()
