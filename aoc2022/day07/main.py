@@ -111,12 +111,18 @@ def task2(data: Node) -> int:
     needed = 30000000
     available = total - data.size
     needed = needed - available
-    every = find(data, total)
-    every.sort(key=lambda n: n.size)
-    for n in every:
-        if n.size > needed:
-            return n.size
-    raise ValueError("No directory has enough space")
+    stack = [data]
+    best = data
+    while len(stack) > 0:
+        current = stack.pop()
+        candidate_childs = False
+        for child in current.children.values():
+            if child.is_dir and child.size >= needed:
+                stack.append(child)
+                candidate_childs = True
+        if not candidate_childs and current.size < best.size:
+            best = current
+    return best.size
 
 
 def main():
