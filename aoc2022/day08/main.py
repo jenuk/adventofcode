@@ -1,5 +1,7 @@
 from time import perf_counter_ns
 
+import numpy as np
+
 
 # Ignore below
 
@@ -29,75 +31,55 @@ def read_data(filename="input.txt"):
 
 def process_data(content):
     data = [list(map(int, line)) for line in content.split()]
-    return data
+    return np.array(data)
 
 
 def check_data(data):
-    m = len(data[0])
-    for line in data:
-        assert len(line) == m, "non rectangular data"
+    pass
+    # numpy will fail on non-rectangular data anyway
+    # m = len(data[0])
+    # for line in data:
+    #     assert len(line) == m, "non rectangular data"
 
 
 def task1(data):
-    visible = [[False]*len(line) for line in data]
-    for i, line in enumerate(data):
-        highest = -1
-        for j, x in enumerate(line):
-            if x > highest:
-                visible[i][j] = True
-                highest = x
-
-        highest = -1
-        for j, x in enumerate(line[::-1]):
-            if x > highest:
-                visible[i][-j-1] = True
-                highest = x
-
-    for j in range(len(data[0])):
-        highest = -1
-        for i in range(len(data)):
-            if data[i][j] > highest:
-                visible[i][j] = True
-                highest = data[i][j]
-
-        highest = -1
-        for i in range(len(data)-1, -1, -1):
-            if data[i][j] > highest:
-                visible[i][j] = True
-                highest = data[i][j]
-
-    return sum(v for line in visible for v in line)
+    visible = np.zeros_like(data, dtype=bool)
+    for d, v in [(data,          visible),
+                 (data[:, ::-1], visible[:, ::-1]),
+                 (data.T,        visible.T),
+                 (data[::-1].T,  visible[::-1].T)]:
+        for i in range(d.shape[0]):
+            highest = -1
+            for j in range(d.shape[1]):
+                if d[i][j] > highest:
+                    v[i][j] = True
+                    highest = d[i][j]
+                    if highest == 9:
+                        # There are no higher trees
+                        break
+    return np.sum(visible)
 
 
 def get_scenic_score(data, i0, j0):
-    height = data[i0][j0]
+    row = data[i0]
+    column = data[:, j0]
     scores = [0, 0, 0, 0]
-    i = i0-1
-    while i >= 0 and data[i][j0] < height:
-        scores[0] += 1
-        i -= 1
-    if i != -1:
-        scores[0] += 1
-    i = i0+1
-    while i < len(data) and data[i][j0] < height:
-        scores[1] += 1
-        i += 1
-    if i != len(data):
-        scores[1] += 1
-    j = j0-1
-    while j >= 0 and data[i0][j] < height:
-        scores[2] += 1
-        j -= 1
-    if j != -1:
-        scores[2] += 1
-    j = j0+1
-    while j < len(data[0]) and data[i0][j] < height:
-        scores[3] += 1
-        j += 1
-    if j != len(data[i0]):
-        scores[3] += 1
-    return scores[0] * scores[1] * scores[2] * scores[3]
-
+    for n, (start, dr, arr) in enumerate([
+            (j0,  1, row),
+            (j0, -1, row),
+            (i0,  1, column),
+            (i0, -1, column),
+            ]):
+        k = start + dr
+        while 0 <= k and k < len(arr):
+            if arr[k] < data[i0, j0]:
+                scores[n] += 1
+            else:
+                break
+            k += dr
+        if 0 < k and k < len(arr)-1:
+            scores[n] += 1
+    return np.prod(scores)
 
 
 def task2(data):
