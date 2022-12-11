@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import re
-from math import prod
+from math import prod, gcd as gcd_tuple
 from time import perf_counter_ns
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 # Ignore below
 
@@ -30,8 +30,32 @@ def read_data(filename="input.txt"):
 
 # Ignore above
 
+def parse_operation(operation: str) -> Callable[[int], int]:
+    arg1, op, arg2 = operation.split(" ")
+    assert arg1 == "old"
+    if arg2 == "old":
+        def inner_plus(x):
+            return x + x
+        
+        def inner_times(x):
+            return x * x
+    else:
+        n = int(arg2)
+        def inner_plus(x):
+            return x + n
+        
+        def inner_times(x):
+            return x * n
+
+    if op == "+":
+        return inner_plus
+    elif op == "*":
+        return inner_times
+    else:
+        raise ValueError(f"Unknown operation '{op}'")
+
 class Monkey:
-    monkeys: Dict[int, Monkey] = dict()
+    monkeys: List[Monkey] = list()
 
     def __init__(self, items, operation, test, ttarget, ftarget):
         self.items = items
@@ -43,8 +67,7 @@ class Monkey:
 
     def throw(self, chilled: bool=True, div: Optional[int]=None):
         for item in self.items:
-            # This is unsafe and should not be used
-            item = eval(self.operation, {"old": item})
+            item = self.operation(item)
             if chilled:
                 item = item//3
             if div is not None:
@@ -60,22 +83,22 @@ class Monkey:
     @staticmethod
     def from_string(inp: str) -> Tuple[int, Monkey]:
         pattern = (
-            r"Monkey (\d):"+"\n"
-            r"  Starting items: ((\d+,? ?)*)"+"\n"
-            r"  Operation: new = (.*)"+"\n"
-            r"  Test: divisible by (\d+)"+"\n"
-            r"    If true: throw to monkey (\d)"+"\n"
-            r"    If false: throw to monkey (\d)"
+            r"Monkey (?P<id>\d):\n"
+            r"  Starting items: (?P<items>(?:\d+,? ?)*)\n"
+            r"  Operation: new = (?P<op>.*)\n"
+            r"  Test: divisible by (?P<test>\d+)\n"
+            r"    If true: throw to monkey (?P<ttarget>\d)\n"
+            r"    If false: throw to monkey (?P<ftarget>\d)"
         )
         pattern = re.compile(pattern, re.MULTILINE)
         match = re.match(pattern, inp)
         assert match is not None, f"invalid monkey:\n{inp}"
-        m_id = int(match.group(1))
-        starting_items = list(map(int, match.group(2).split(",")))
-        operation = match.group(4)
-        test = int(match.group(5))
-        ttarget = int(match.group(6))
-        ftarget = int(match.group(7))
+        m_id = int(match.group("id"))
+        starting_items = list(map(int, match.group("items").split(",")))
+        operation = parse_operation(match.group("op"))
+        test = int(match.group("test"))
+        ttarget = int(match.group("ttarget"))
+        ftarget = int(match.group("ftarget"))
         monkey = Monkey(starting_items, operation, test, ttarget, ftarget)
         Monkey.monkeys[m_id] = monkey
         return m_id, monkey
@@ -83,11 +106,10 @@ class Monkey:
 
 def process_data(content: str) -> List[Monkey]:
     monkeys = content.split("\n\n")
-    res = [None]*len(monkeys)
+    Monkey.monkeys = [None]*len(monkeys)
     for mstr in monkeys:
-        pos, monk = Monkey.from_string(mstr)
-        res[pos] = monk
-    return res
+        _ = Monkey.from_string(mstr)
+    return Monkey.monkeys
 
 
 def check_data(data):
@@ -114,8 +136,20 @@ def task1(data: List[Monkey]) -> int:
     return top2(data)
 
 
+def gcd(*ints: int) -> int:
+    # still on python 3.8, math.gcd only accepts two arguments
+    if len(ints) == 0:
+        return 1
+    res = ints[0]
+    for k in ints[1:]:
+        res = gcd_tuple(res, k)
+    return res
+
+
 def task2(data: List[Monkey]) -> int:
     div = prod(m.test for m in data)
+    # doesn't change anything for my data, but is nice in general
+    div = div // gcd(*tuple(m.test for m in data))
     for _ in range(10_000):
         for monkey in data:
             monkey.throw(False, div)
@@ -132,7 +166,6 @@ def main():
     result1 = task1(data)
     t2 = perf_counter_ns()
     # reset data
-    Monkey.monkeys = dict()
     data = read_data(fn)
     result2 = task2(data)
     t3 = perf_counter_ns()
