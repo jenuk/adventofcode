@@ -6,7 +6,7 @@ from time import perf_counter_ns
 def format_ns(time: int) -> str:
     lengths = [1, 1000, 1000, 1000, 60, 60, 24]
     units = ["ns", "μs", "ms", "s", "minutes", "hours", "days"]
-    idx = 1
+    idx = 0
     prev = 0
     while time > lengths[idx+1]:
         idx += 1
