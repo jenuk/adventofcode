@@ -1,5 +1,6 @@
-import time
 import functools
+import sys
+import time
 from typing import Callable
 
 __all__ = ["timeit", "load_lines"]
@@ -10,7 +11,7 @@ def format_ns(time: int) -> str:
     units = ["ns", "μs", "ms", "s", "minutes", "hours", "days"]
     idx = 0
     prev = 0
-    while time > lengths[idx+1]:
+    while time > lengths[idx + 1]:
         idx += 1
         time, prev = time // lengths[idx], time % lengths[idx]
 
@@ -24,7 +25,12 @@ def timeit(func: Callable) -> Callable:
     @functools.wraps(func)
     def inner_func(*args, **kwargs):
         t0 = time.perf_counter_ns()
-        out = func(*args, **kwargs)
+        try:
+            out = func(*args, **kwargs)
+        except KeyboardInterrupt as e:
+            t1 = time.perf_counter_ns()
+            print(f"Call {func.__name__} for {format_ns(t1 - t0)} until Interruption")
+            sys.exit(130)
         t1 = time.perf_counter_ns()
         print(f"Call {func.__name__} took {format_ns(t1 - t0)}")
         return out
