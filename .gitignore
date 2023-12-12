@@ -1,5 +1,6 @@
 a.out
 input*
+example*
 out/*
 *.mp4
 __pycache__
