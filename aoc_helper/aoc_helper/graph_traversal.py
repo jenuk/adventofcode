@@ -5,24 +5,23 @@ from abc import abstractmethod
 from collections import deque
 from collections.abc import Callable, Iterator
 from itertools import count
-from typing import Any, Generic, Optional, Protocol, Self, TypeVar
+from typing import Protocol, TypeVar
 
 from .graph import BaseNode, Weight
 
 __all__ = ["bfs", "dfs", "dijkstra", "a_star", "double_sided_distance"]
 W = TypeVar("W", bound=Weight)  # weight for a weighted graph
+Node = TypeVar("Node", bound=BaseNode)
 
 
-def bfs(
-    start: BaseNode | list[BaseNode], reversed: bool = False
-) -> Iterator[tuple[BaseNode, int]]:
+def bfs(start: Node | list[Node], reversed: bool = False) -> Iterator[tuple[Node, int]]:
     """Breadth-first search"""
     if not isinstance(start, list):
         start = [start]
 
     # pyright assumes second argument is of type Literal[0] if not
     # specified, should be obvious ...
-    queue: deque[tuple[BaseNode, int]] = deque((s, 0) for s in start)
+    queue: deque[tuple[Node, int]] = deque((s, 0) for s in start)
     waiting = set(s for s in start)
 
     while len(queue) > 0:
@@ -36,7 +35,7 @@ def bfs(
             waiting.add(neighbor)
 
 
-def dfs(start: BaseNode | list[BaseNode], reversed: bool = False) -> Iterator[BaseNode]:
+def dfs(start: Node | list[Node], reversed: bool = False) -> Iterator[Node]:
     """Depth-first search"""
     if not isinstance(start, list):
         start = [start]
@@ -57,10 +56,10 @@ def dfs(start: BaseNode | list[BaseNode], reversed: bool = False) -> Iterator[Ba
 
 
 def dijkstra(
-    start: BaseNode[W] | list[BaseNode[W]],
+    start: Node | list[Node],
     reversed: bool = False,
     start_weight: W = 0,  # pyright: ignore
-) -> Iterator[tuple[BaseNode[W], W]]:
+) -> Iterator[tuple[Node, W]]:
     """Dijkstra search algorithm for shortest path"""
     if not isinstance(start, list):
         start = [start]
@@ -68,9 +67,7 @@ def dijkstra(
     __counter = count()
     tiebreaker = lambda n: next(__counter)
 
-    heap: list[tuple[W, int, BaseNode[W]]] = [
-        (start_weight, tiebreaker(s), s) for s in start
-    ]
+    heap: list[tuple[W, int, Node]] = [(start_weight, tiebreaker(s), s) for s in start]
     heapq.heapify(heap)
     visited = set()
     while len(heap) > 0:
@@ -85,11 +82,11 @@ def dijkstra(
 
 
 def a_star(
-    start: BaseNode[W] | list[BaseNode[W]],
-    heuristic: Callable[[BaseNode[W]], W],
+    start: Node | list[Node],
+    heuristic: Callable[[Node], W],
     reversed: bool = False,
     start_weight: W = 0,  # pyright: ignore
-) -> Iterator[tuple[BaseNode[W], W]]:
+) -> Iterator[tuple[Node, W]]:
     """A start search algorithm for shortest path"""
     if not isinstance(start, list):
         start = [start]
@@ -97,7 +94,7 @@ def a_star(
     __counter = count()
     tiebreaker = lambda n: next(__counter)
 
-    heap: list[tuple[W, W, int, BaseNode[W]]] = [
+    heap: list[tuple[W, W, int, Node]] = [
         (start_weight + heuristic(s), start_weight, tiebreaker(s), s) for s in start
     ]
     heapq.heapify(heap)
@@ -123,21 +120,21 @@ def a_star(
 class WeightedTraversal(Protocol):
     @abstractmethod
     def __call__(
-        self, start: BaseNode[W] | list[BaseNode], reversed: bool, start_weight: W
-    ) -> Iterator[tuple[BaseNode[W], W]]:
+        self, start: Node | list[Node], reversed: bool, start_weight: W
+    ) -> Iterator[tuple[Node, W]]:
         pass
 
 
 def double_sided_distance(
     traversal: WeightedTraversal,
-    start: BaseNode[W] | list[BaseNode[W]],
-    end: BaseNode[W] | list[BaseNode[W]],
+    start: Node | list[Node],
+    end: Node | list[Node],
     start_weight: W = 0,  # pyright: ignore
     end_weight: W = 0,  # pyright: ignore
 ):
     # only returns shortest path, no intermediated traversal
-    visited_forward: dict[BaseNode[W], W] = dict()
-    visited_backward: dict[BaseNode[W], W] = dict()
+    visited_forward: dict[Node, W] = dict()
+    visited_backward: dict[Node, W] = dict()
     it_forward = traversal(start, reversed=False, start_weight=start_weight)
     it_backward = traversal(end, reversed=True, start_weight=start_weight)
 
