@@ -59,7 +59,7 @@ def dijkstra(
     start: Node | list[Node],
     reversed: bool = False,
     start_weight: W = 0,  # pyright: ignore
-) -> Iterator[tuple[Node, W]]:
+) -> Iterator[tuple[Node, Node, W]]:
     """Dijkstra search algorithm for shortest path"""
     if not isinstance(start, list):
         start = [start]
@@ -67,18 +67,20 @@ def dijkstra(
     __counter = count()
     tiebreaker = lambda n: next(__counter)
 
-    heap: list[tuple[W, int, Node]] = [(start_weight, tiebreaker(s), s) for s in start]
+    heap: list[tuple[W, int, Node, Node]] = [
+        (start_weight, tiebreaker(s), s, s) for s in start
+    ]
     heapq.heapify(heap)
     visited = set()
     while len(heap) > 0:
-        d, _, node = heapq.heappop(heap)
+        d, _, node, parent = heapq.heappop(heap)
         if node in visited:
             continue
-        yield node, d
+        yield node, parent, d
         visited.add(node)
         for neighbor, w in node.get_weighted_neighbors(reverse=reversed):
             if neighbor not in visited:
-                heapq.heappush(heap, (d + w, tiebreaker(neighbor), neighbor))
+                heapq.heappush(heap, (d + w, tiebreaker(neighbor), neighbor, node))
 
 
 def a_star(

@@ -92,7 +92,7 @@ def main(fn: str):
     total_p2 = 0
 
     start = CityBlock(square, 0, 0, -1, 0, 3, 0)
-    for node, distance in dijkstra(start, start_weight=0):
+    for node, _, distance in dijkstra(start, start_weight=0):
         if node.px == n - 1 and node.py == m - 1:
             total_p1 = distance
             break
@@ -100,7 +100,7 @@ def main(fn: str):
         print("No solution found (p1)")
 
     start = CityBlock(square, 0, 0, -1, 0, 10, 4)
-    for node, distance in dijkstra(start, start_weight=0):
+    for node, _, distance in dijkstra(start, start_weight=0):
         if node.px == n - 1 and node.py == m - 1:
             total_p2 = distance
             break

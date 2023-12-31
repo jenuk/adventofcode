@@ -204,14 +204,14 @@ def main(fn: str):
 
     start = process_data(read_data(fn))
     start2 = start.expand()
-    for node, distance in dijkstra(start, start_weight=0):
+    for node, _, distance in dijkstra(start, start_weight=0):
         if node.finished():
             total_p1 = distance
             break
     else:
         print("No solution found (p1)")
 
-    for node, distance in dijkstra(start2, start_weight=0):
+    for node, _, distance in dijkstra(start2, start_weight=0):
         if node.finished():
             total_p2 = distance
             break
