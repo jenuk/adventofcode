@@ -157,9 +157,6 @@ class State(BaseNode):
             if out is not None:
                 yield out
 
-        # guarantee a yield statement
-        yield from ()
-
     def __hash__(self) -> int:
         return hash((self.tunnels, self.hallway))
 

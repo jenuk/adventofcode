@@ -49,7 +49,6 @@ class CityBlock(BaseNode):
         self, reverse: bool = False
     ) -> Iterator[tuple["CityBlock", int]]:
         assert not reverse, "Not implemented"
-        all_blocks = []
         for vec, (dx, dy) in enumerate(self.directions):
             # check if that step is available:
             # - x in bounds
@@ -64,7 +63,7 @@ class CityBlock(BaseNode):
                 and (vec != ((self.vec + 2) % 4))
                 and (self.k >= self.min_k or vec == self.vec or self.vec == -1)
             ):
-                all_blocks.append(
+                yield (
                     (
                         CityBlock(
                             self.square,
@@ -78,8 +77,6 @@ class CityBlock(BaseNode):
                         self.square[self.px + dx][self.py + dy],
                     )
                 )
-        # guarantee a yield statement
-        yield from all_blocks
 
 
 @timeit
