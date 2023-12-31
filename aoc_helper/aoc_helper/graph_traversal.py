@@ -14,45 +14,49 @@ W = TypeVar("W", bound=Weight)  # weight for a weighted graph
 Node = TypeVar("Node", bound=BaseNode)
 
 
-def bfs(start: Node | list[Node], reversed: bool = False) -> Iterator[tuple[Node, int]]:
+def bfs(
+    start: Node | list[Node], reversed: bool = False
+) -> Iterator[tuple[Node, Node, int]]:
     """Breadth-first search"""
     if not isinstance(start, list):
         start = [start]
 
     # pyright assumes second argument is of type Literal[0] if not
     # specified, should be obvious ...
-    queue: deque[tuple[Node, int]] = deque((s, 0) for s in start)
+    queue: deque[tuple[Node, Node, int]] = deque((s, s, 0) for s in start)
     waiting = set(s for s in start)
 
     while len(queue) > 0:
-        node, d = queue.popleft()
-        yield node, d
+        node, parent, d = queue.popleft()
+        yield node, parent, d
         for neighbor in node.get_neighbors(reverse=reversed):
             if neighbor in waiting:
                 continue
 
-            queue.append((neighbor, d + 1))
+            queue.append((neighbor, node, d + 1))
             waiting.add(neighbor)
 
 
-def dfs(start: Node | list[Node], reversed: bool = False) -> Iterator[Node]:
+def dfs(
+    start: Node | list[Node], reversed: bool = False
+) -> Iterator[tuple[Node, Node]]:
     """Depth-first search"""
     if not isinstance(start, list):
         start = [start]
 
-    stack = start
+    stack = [(n, n) for n in start]
     visited = set()
     while len(stack) > 0:
-        node = stack.pop()
+        node, parent = stack.pop()
         if node in visited:
             continue
-        yield node
+        yield node, parent
         visited.add(node)
 
         for neighbor in node.get_neighbors(reverse=reversed):
             if neighbor in visited:
                 continue
-            stack.append(neighbor)
+            stack.append((neighbor, node))
 
 
 def dijkstra(
@@ -88,7 +92,7 @@ def a_star(
     heuristic: Callable[[Node], W],
     reversed: bool = False,
     start_weight: W = 0,  # pyright: ignore
-) -> Iterator[tuple[Node, W]]:
+) -> Iterator[tuple[Node, Node, W]]:
     """A start search algorithm for shortest path"""
     if not isinstance(start, list):
         start = [start]
@@ -96,16 +100,16 @@ def a_star(
     __counter = count()
     tiebreaker = lambda n: next(__counter)
 
-    heap: list[tuple[W, W, int, Node]] = [
-        (start_weight + heuristic(s), start_weight, tiebreaker(s), s) for s in start
+    heap: list[tuple[W, W, int, Node, Node]] = [
+        (start_weight + heuristic(s), start_weight, tiebreaker(s), s, s) for s in start
     ]
     heapq.heapify(heap)
     visited = set()
     while len(heap) > 0:
-        _, d, _, node = heapq.heappop(heap)
+        _, d, _, node, parent = heapq.heappop(heap)
         if node in visited:
             continue
-        yield node, d
+        yield node, parent, d
         visited.add(node)
         for neighbor, w in node.get_weighted_neighbors(reverse=reversed):
             if neighbor in visited:
@@ -115,6 +119,7 @@ def a_star(
                 d + w,
                 tiebreaker(neighbor),
                 neighbor,
+                node,
             )
             heapq.heappush(heap, tpl)
 

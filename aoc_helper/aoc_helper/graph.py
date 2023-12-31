@@ -21,7 +21,9 @@ class BaseNode(Generic[W]):
         raise NotImplementedError("Not implemented for base")
 
     def get_neighbors(self, reverse: bool = False) -> Iterator[Self]:
-        raise NotImplementedError("Not implemented for base")
+        # default implementation for weighted graphs
+        for neighbor, _ in self.get_weighted_neighbors(reverse=reverse):
+            yield neighbor
 
     def get_weighted_neighbors(self, reverse: bool = False) -> Iterator[tuple[Self, W]]:
         raise NotImplementedError("Not implemented for base")
