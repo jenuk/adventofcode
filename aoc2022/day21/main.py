@@ -36,6 +36,8 @@ def process_data(content: str):
     for line in content.split("\n"):
         name, instruction = line.split(": ")
         monkeys[name] = Monkey(name, instruction, monkeys)
+        if name == "humn":
+            monkeys["humn_val"] = int(instruction)
     return monkeys
 
 
@@ -105,93 +107,46 @@ class Monkey:
         self.name = name
         if val.isnumeric():
             self.is_instruction = False
-            self.val = Fraction(int(val))
+            if name == "humn":
+                self.orig_val = int(val)
+                self.val = LinearFn(Fraction(1), Fraction(0))
+            else:
+                self.val = Fraction(int(val))
             self.left, self.op, self.right = "", "", ""
         else:
             self.is_instruction = True
             self.val = None
             self.left, self.op, self.right = val.split(" ")
 
-        if name == "humn":
-            # m*x + b with self.variable = [m, b]
-            self.variable = LinearFn(Fraction(1), Fraction(0))
-        else:
-            self.variable = None
-
-    def solve_all(self):
+    def solve(self):
         if self.val is not None:
+            # end of tree
             return
         left = self.monkeys[self.left]
         right = self.monkeys[self.right]
-        left.solve_all()
-        right.solve_all()
+        left.solve()
+        right.solve()
         self.val = op_dict[self.op](left.val, right.val)
-
-    def solve_partial(self):
-        if self.val is not None or self.variable is not None:
-            return
-        left = self.monkeys[self.left]
-        right = self.monkeys[self.right]
-        left.solve_partial()
-        right.solve_partial()
-        if left.variable or right.variable:
-            lv = left.variable if left.variable else left.val
-            rv = right.variable if right.variable else right.val
-            self.variable = op_dict[self.op](lv, rv)
-        else:
-            self.val = op_dict[self.op](left.val, right.val)
-
-    def reset(self):
-        if self.is_instruction:
-            self.val = None
-            self.monkeys[self.left].reset()
-            self.monkeys[self.right].reset()
-
-    def reset_partial(self):
-        if self.is_instruction and self.variable:
-            self.val = None
-            self.monkeys[self.left].reset_partial()
-            self.monkeys[self.right].reset_partial()
-
-    def __str__(self, depth: int = 0):
-        prefix = " " * depth
-        if self.variable and not self.is_instruction:
-            return prefix + "x\n"
-        elif self.val is not None:
-            return prefix + str(self.val) + "\n"
-        else:
-            assert self.is_instruction
-            return (
-                prefix
-                + self.op
-                + "\n"
-                + self.monkeys[self.left].__str__(depth=depth + 1)
-                + self.monkeys[self.right].__str__(depth=depth + 1)
-            )
 
 
 def task1(monkeys):
     root = monkeys["root"]
-    left = monkeys[root.left]
-    right = monkeys[root.right]
-    humn = monkeys["humn"].val
-    left.solve_partial()
-    right.solve_partial()
-    lv = left.variable(humn) if left.variable else left.val
-    rv = right.variable(humn) if right.variable else right.val
-    return int(op_dict[root.op](lv, rv))
+    humn = monkeys["humn_val"]
+    root.solve()
+    return int(root.val(humn))
 
 
 def task2(monkeys):
     root = monkeys["root"]
     left = monkeys[root.left]
     right = monkeys[root.right]
+
     # this is already done in task1, so it won't be computed again
-    left.solve_partial()
-    right.solve_partial()
-    lv = left.variable if left.variable else left.val
-    rv = right.variable if right.variable else right.val
-    total = lv - rv
+    left.solve()
+    right.solve()
+
+    # solve linear equation
+    total = left.val - right.val
     humn = -total.b / total.m
     return humn
 
