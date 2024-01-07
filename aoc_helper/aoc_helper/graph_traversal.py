@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import heapq
 from abc import abstractmethod
 from collections import deque
@@ -24,17 +22,21 @@ def bfs(
     # pyright assumes second argument is of type Literal[0] if not
     # specified, should be obvious ...
     queue: deque[tuple[Node, Node, int]] = deque((s, s, 0) for s in start)
-    waiting = set(s for s in start)
+    if start[0].has_unique:
+        uniq = lambda n: n.unique()
+    else:
+        uniq = lambda n: n
+    waiting = set(uniq(s) for s in start)
 
     while len(queue) > 0:
         node, parent, d = queue.popleft()
         yield node, parent, d
         for neighbor in node.get_neighbors(reverse=reversed):
-            if neighbor in waiting:
+            if uniq(neighbor) in waiting:
                 continue
 
             queue.append((neighbor, node, d + 1))
-            waiting.add(neighbor)
+            waiting.add(uniq(neighbor))
 
 
 def dfs(
