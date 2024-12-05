@@ -4,7 +4,7 @@ from aoc_helper.utils import load_lines, timeit
 
 
 @timeit
-def prepare_input(lines: str):
+def prepare_input(lines: list[str]):
     idx = lines.index("")
     rules, updates = lines[:idx], lines[idx + 1 :]
 
@@ -60,11 +60,11 @@ def task2(
         complete_line, _ = to_explicit([nodes[idx] for idx in line], strict_nodes=True)
 
         try:
-            sorted = topological_sort(complete_line)
+            sorted_line = topological_sort(complete_line)
         except ValueError as e:
             print(f"{line=} is unsorteable '{e}'")
             continue
-        result += sorted[len(sorted) // 2].info.idx
+        result += sorted_line[len(sorted_line) // 2].info.idx
     return result
 
 
