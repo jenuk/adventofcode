@@ -47,16 +47,21 @@ class BaseNode(Generic[W]):
         raise NotImplementedError("Not implemented for base")
 
 
-class ExplicitNode(BaseNode):
-    def __init__(self, idx: int, all_nodes: list["ExplicitNode"]):
+class ExplicitNode(BaseNode[W]):
+    def __init__(self, idx: int, all_nodes: list["ExplicitNode"], info: Any = None):
         self.idx = idx
         self.incoming: list[tuple[int, W]] = []
         self.outgoing: list[tuple[int, W]] = []
+        self.incoming_set: set[int] = set()
+        self.outgoing_set: set[int] = set()
         self.all_nodes = all_nodes
+        self.info = info
 
-    def add_arrow(self, target: int, distance=1):
+    def add_arrow(self, target: int, distance: W = 1):
         self.outgoing.append((target, distance))
+        self.outgoing_set.add(target)
         self.all_nodes[target].incoming.append((self.idx, distance))
+        self.all_nodes[target].incoming_set.add(self.idx)
 
     def unique(self) -> int:
         return self.idx
@@ -68,3 +73,13 @@ class ExplicitNode(BaseNode):
 
         for n_idx, distance in source:
             yield self.all_nodes[n_idx], distance
+
+    def check_incoming(self, other: int) -> bool:
+        if self.incoming_set is None:
+            self.incoming_set = set(idx for idx, _ in self.incoming)
+        return other in self.incoming_set
+
+    def check_outgoing(self, other: int) -> bool:
+        if self.outgoing_set is None:
+            self.outgoing_set = set(idx for idx, _ in self.outgoing)
+        return other in self.outgoing_set
