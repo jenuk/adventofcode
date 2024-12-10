@@ -1,7 +1,6 @@
 from typing import Any, Iterator
 
-from aoc_helper.graph_traversal import dijkstra
-from aoc_helper.graph import BaseNode
+from aoc_helper.graph import BaseNode, dijkstra
 from aoc_helper.utils import load_lines, timeit
 
 

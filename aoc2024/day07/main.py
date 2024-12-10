@@ -1,10 +1,9 @@
-import operator
 import dataclasses
+import operator
 from typing import Hashable, Iterator
 
-from aoc_helper.graph import BaseNode
-from aoc_helper.utils import load_lines, ExclusiveTimeIt
-from aoc_helper.graph_traversal import dfs
+from aoc_helper.graph import BaseNode, dfs
+from aoc_helper.utils import ExclusiveTimeIt, load_lines
 
 timeit = ExclusiveTimeIt()
 

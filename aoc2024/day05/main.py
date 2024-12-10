@@ -1,5 +1,4 @@
-from aoc_helper.graph import ExplicitNode
-from aoc_helper.graph_utils import to_explicit, topological_sort
+from aoc_helper.graph import ExplicitNode, to_explicit, topological_sort
 from aoc_helper.utils import load_lines, timeit
 
 

@@ -1,6 +1,7 @@
 from typing import TypeVar
-from .graph import BaseNode, Weight, ExplicitNode
-from .graph_traversal import dijkstra
+
+from .base import BaseNode, ExplicitNode, Weight
+from .traversal import dijkstra
 
 W = TypeVar("W", bound=Weight)  # weight for a weighted graph
 Node = TypeVar("Node", bound=BaseNode)

@@ -5,9 +5,15 @@ from collections.abc import Callable, Iterator
 from itertools import count
 from typing import Protocol, TypeVar
 
-from .graph import BaseNode, Weight
+from .base import BaseNode, Weight
 
-__all__ = ["bfs", "dfs", "dijkstra", "a_star", "double_sided_distance"]
+__all__ = [
+    "bfs",
+    "dfs",
+    "dijkstra",
+    "a_star",
+    "double_sided_distance",
+]
 W = TypeVar("W", bound=Weight)  # weight for a weighted graph
 Node = TypeVar("Node", bound=BaseNode)
 

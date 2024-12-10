@@ -1,8 +1,7 @@
 from enum import Enum
 from typing import Any, Iterator, Optional
 
-from aoc_helper.graph import BaseNode
-from aoc_helper.graph_traversal import dijkstra
+from aoc_helper.graph import BaseNode, dijkstra
 from aoc_helper.utils import timeit
 
 

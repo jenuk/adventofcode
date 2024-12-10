@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Hashable, TypeVar
 
-from .graph import BaseNode, Weight, ExplicitNode
+from .base import BaseNode, ExplicitNode, Weight
 
 W = TypeVar("W", bound=Weight)  # weight for a weighted graph
 Node = TypeVar("Node", bound=BaseNode)
