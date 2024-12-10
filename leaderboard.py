@@ -75,7 +75,7 @@ def custom_score(df: pd.DataFrame, format_key: str):
         df[format_score.format("total")] += df[format_score.format(k)]
 
 
-def chart(df: pd.DataFrame, format_key: str):
+def chart(df: pd.DataFrame, format_key: str, ylog: bool):
     data = dict()
     for k in range(26):
         if format_key.format(k) not in df.columns:
@@ -86,14 +86,15 @@ def chart(df: pd.DataFrame, format_key: str):
     long = df.T.melt(ignore_index=False)
     long.index.name = "Day"
     long.rename(columns={"value": "Score", "variable": "Name"}, inplace=True)
-    fig = px.line(long, x=long.index, y="Score", color="Name")
+    fig = px.line(long, x=long.index, y="Score", color="Name", log_y=ylog)
     st.plotly_chart(fig)
 
 
 def main(fn: str):
     # load data
-    cols = st.columns(2)
-    year = cols[1].number_input("Current year", 2015, 2024, 2022)
+    now = datetime.now()
+    max_year = now.year - (now.month < 12)
+    year = st.number_input("Current year", 2015, max_year, max_year)
     data_json = load_json(fn)
     df = json_to_dataframe(data_json, year)
 
@@ -136,8 +137,10 @@ def main(fn: str):
         "Time diff score": "{}_dt_score",
         "Time diff": "{}_dt",
     }
-    chart_key = st.selectbox("What to plot?", chart_keys.keys())
-    chart(df, chart_keys[chart_key])
+    options = list(chart_keys.keys())
+    chart_key = st.selectbox("What to plot?", options, index=options.index("Time diff"))
+    ylog = st.checkbox("Y-Log-Scale", chart_key == "Time diff")
+    chart(df, chart_keys[chart_key], ylog)
 
 
 if __name__ == "__main__":
