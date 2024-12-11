@@ -37,24 +37,18 @@ def task1(grid: Grid[int], graph: list[ExplicitNode]) -> int:
 
 @timeit
 def task2(grid: Grid[int], graph: list[ExplicitNode]) -> int:
-    queue = deque(node for node in graph if grid[node.info] == 9)
-    waiting = set(queue)
+    nodes_by_level = [[] for _ in range(10)]
+    for node in graph:
+        nodes_by_level[grid[node.info]].append(node)
     grid_ratings = Grid(grid.n, grid.m, fn=lambda i, j: int(grid[i, j] == 9))
 
-    while len(queue) > 0:
-        node = queue.popleft()
+    for nodes in nodes_by_level[-2::-1]:
+        for node in nodes:
+            grid_ratings[node.info] = sum(
+                grid_ratings[neighbor.info] for neighbor in node.get_neighbors()
+            )
 
-        for neighbor in node.get_neighbors():
-            grid_ratings[node.info] += grid_ratings[neighbor.info]
-
-        for neighbor in node.get_neighbors(reverse=True):
-            if neighbor in waiting:
-                continue
-
-            queue.append(neighbor)
-            waiting.add(neighbor)
-
-    return sum(grid_ratings[node.info] for node in graph if grid[node.info] == 0)
+    return sum(grid_ratings[node.info] for node in nodes_by_level[0])
 
 
 def main(fn: str):
