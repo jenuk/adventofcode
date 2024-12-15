@@ -21,7 +21,11 @@ Node = TypeVar("Node", bound=BaseNode)
 def bfs(
     start: Node | list[Node], reversed: bool = False
 ) -> Iterator[tuple[Node, Node, int]]:
-    """Breadth-first search"""
+    """
+    Breadth-first search.
+
+    Yields node, parent node, distance from start
+    """
     if not isinstance(start, list):
         start = [start]
 
