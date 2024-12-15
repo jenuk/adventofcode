@@ -49,17 +49,26 @@ def task1(robots: list[tuple[int, int, int, int]], n: int, m: int, steps: int) -
 @timeit
 def task2(robots: list[tuple[int, int, int, int]], n: int, m: int) -> int:
     os.makedirs("frames", exist_ok=True)
+    os.makedirs("frames_short", exist_ok=True)
     scores = []
     digits = math.ceil(math.log10(n * m))
+    grid_large = [[False] * (10 * n) for _ in range(10 * m)]
     for idx in tqdm(range(1, n * m)):
         new_robots = []
-        grid = [[False] * m for _ in range(n)]
+        idx_h, idx_w = (idx % 100) // 10, (idx % 100) % 10
+        grid = [[False] * (n) for _ in range(m)]
         for px, py, vx, vy in robots:
             new_robots.append(((px + vx) % n, (py + vy) % m, vx, vy))
-            grid[new_robots[-1][0]][new_robots[-1][1]] = True
+            grid[new_robots[-1][1]][new_robots[-1][0]] = True
+            grid_large[idx_h * m + new_robots[-1][1]][
+                idx_w * n + new_robots[-1][0]
+            ] = True
         scores.append((score(new_robots, n, m), idx))
-        save_bitmap(grid, f"frames/{idx:0{digits}}.pbm")
         robots = new_robots
+        save_bitmap(grid, f"frames/{idx:0{digits}}.pbm")
+        if idx % 100 == 99 or idx == n * m - 1:
+            save_bitmap(grid_large, f"frames_short/{idx//100:0{digits-2}}.pbm")
+            grid_large = [[False] * (10 * n) for _ in range(10 * m)]
     scores.sort()
     print("\n".join(map(str, scores[:20])))
     print("...")
