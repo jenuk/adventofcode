@@ -48,6 +48,8 @@ class BaseNode(Generic[W]):
 
 
 class ExplicitNode(BaseNode[W]):
+    has_unique = True
+
     def __init__(self, idx: int, all_nodes: list["ExplicitNode"], info: Any = None):
         self.idx = idx
         self.incoming: list[tuple[int, W]] = []

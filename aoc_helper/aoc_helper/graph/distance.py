@@ -8,7 +8,11 @@ Node = TypeVar("Node", bound=BaseNode)
 
 
 def bellman_ford(
-    start: Node, graph: list[Node], inf: W = float("inf"), check_cycles: bool = False
+    start: Node,
+    graph: list[Node],
+    inf: W = float("inf"),
+    check_cycles: bool = False,
+    reverse: bool = False,
 ) -> tuple[list[Node], list[W]]:
     """Computes shortest paths between start node and all other nodes"""
     distances = [inf for _ in graph]
@@ -20,7 +24,7 @@ def bellman_ford(
     # extract edge list from graph and cache
     edges = []
     for k, node in enumerate(graph):
-        for neighbor, dist in node.get_weighted_neighbors():
+        for neighbor, dist in node.get_weighted_neighbors(reverse=reverse):
             j = graph.index(neighbor)
             edges.append((k, j, dist))
             if k == start_idx:
@@ -44,19 +48,18 @@ def bellman_ford(
 
 
 def dijkstra2(
-    start: Node, graph: list[Node], inf: W = float("inf")
+    start: Node, graph: list[Node], inf: W = float("inf"), reverse: bool = False
 ) -> tuple[list[Node], list[W]]:
     # same interface as bellman_ford
-    distances = [inf for _ in graph]
     parents = [n for n in graph]
+    node_to_idx = {n: k for k, n in enumerate(graph)}
 
-    start_idx = graph.index(start)
-    distances[start_idx] = 0
+    distances = [inf for _ in graph]
+    distances[node_to_idx[start]] = 0
 
-    for node, parent, weight in dijkstra(start):
-        node_idx = graph.index(node)
-        distances[node_idx] = weight
-        parents[node_idx] = parent
+    for node, parent, weight in dijkstra(start, reversed=reverse):
+        distances[node_to_idx[node]] = weight
+        parents[node_to_idx[node]] = parent
 
     return parents, distances
 
