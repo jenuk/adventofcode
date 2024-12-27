@@ -77,11 +77,48 @@ class ExplicitNode(BaseNode[W]):
             yield self.all_nodes[n_idx], distance
 
     def check_incoming(self, other: int) -> bool:
-        if self.incoming_set is None:
-            self.incoming_set = set(idx for idx, _ in self.incoming)
         return other in self.incoming_set
 
     def check_outgoing(self, other: int) -> bool:
-        if self.outgoing_set is None:
-            self.outgoing_set = set(idx for idx, _ in self.outgoing)
+        return other in self.outgoing_set
+
+
+class ExplicitKeyNode(BaseNode[W]):
+    has_unique = True
+
+    def __init__(
+        self,
+        idx: Hashable,
+        all_nodes: dict[Hashable, "ExplicitKeyNode"],
+        info: Any = None,
+    ):
+        self.idx = idx
+        self.incoming: list[tuple[Hashable, W]] = []
+        self.outgoing: list[tuple[Hashable, W]] = []
+        self.incoming_set: set[Hashable] = set()
+        self.outgoing_set: set[Hashable] = set()
+        self.all_nodes = all_nodes
+        self.info = info
+
+    def add_arrow(self, target: Hashable, distance: W = 1):
+        self.outgoing.append((target, distance))
+        self.outgoing_set.add(target)
+        self.all_nodes[target].incoming.append((self.idx, distance))
+        self.all_nodes[target].incoming_set.add(self.idx)
+
+    def unique(self) -> Hashable:
+        return self.idx
+
+    def get_weighted_neighbors(
+        self, reverse: bool = False
+    ) -> Iterator[tuple["ExplicitKeyNode", W]]:
+        source = self.incoming if reverse else self.outgoing
+
+        for n_idx, distance in source:
+            yield self.all_nodes[n_idx], distance
+
+    def check_incoming(self, other: int) -> bool:
+        return other in self.incoming_set
+
+    def check_outgoing(self, other: int) -> bool:
         return other in self.outgoing_set

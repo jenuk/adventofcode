@@ -1,4 +1,4 @@
-from .base import BaseNode, ExplicitNode, Weight
+from .base import BaseNode, ExplicitKeyNode, ExplicitNode, Weight
 from .distance import (
     aggregate_dijkstra,
     bellman_ford,
@@ -11,6 +11,7 @@ from .utils import to_explicit, topological_sort
 
 __all__ = [
     "BaseNode",
+    "ExplicitKeyNode",
     "ExplicitNode",
     "Weight",
     "a_star",
