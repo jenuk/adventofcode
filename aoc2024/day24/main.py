@@ -97,7 +97,7 @@ class WireNode(ExplicitKeyNode):
                     and a_trans[1] == b_trans[1]
                 ) or (a_trans == ("direct", 0) and b_trans == ("raw", 1)):
                     if self.info == "xor":
-                        self.translated = ("z", a_trans[1])
+                        self.translated = ("z", b_trans[1])
                     elif self.info == "and":
                         self.translated = ("sub_carry", b_trans[1] + 1)
                     else:
@@ -117,10 +117,15 @@ class WireNode(ExplicitKeyNode):
 
         return self.translated
 
+    def reset_translate(self):
+        self.translated = None
+        for node in self.get_neighbors():
+            node.reset_translate()
+
     def __repr__(self) -> str:
         return (
             f"WireNode({self.idx}, {self.info}, "
-            f"{[node.idx for node in self.get_neighbors()]})"
+            f"{[node.idx for node in self.get_neighbors(reverse=True)]})"
         )
 
     def __str__(
@@ -222,9 +227,14 @@ def swap_wires(
         loc_b = int(idx_b[1:])
         zs[loc_b] = node_a
 
+    node_a.reset_translate()
+    node_b.reset_translate()
+    node_a.translate()
+    node_b.translate()
+
 
 @timeit
-def task2(graph: dict[str, WireNode]) -> str | None:
+def task2(graph: dict[str, WireNode]) -> str:
     """
     A semi-automatic solution for part 2. To solve, translate the graph,
     manually inspect the nodes that cause the error and determine which wires
@@ -246,69 +256,72 @@ def task2(graph: dict[str, WireNode]) -> str | None:
         childs = {node for node, _ in dfs(z[:k], reversed=True)}
         if childs & x_set != set(x[:k]):
             print(f"x{k} wrongly wired", {c.idx for c in childs & x_set})
-            return None
+            raise ValueError("Failed to solve")
         if childs & y_set != set(y[:k]):
             print(f"y{k} wrongly wired", {c.idx for c in childs & y_set})
-            return None
-    # -> worked without changing any wires for me, but should also be useable
-    # similar to below with semi-automatic fixing
+            raise ValueError("Failed to solve")
+    # -> worked without changing any wires for me, will need some swapping
+    # based on this, if it breaks
 
-    # for new graph delete below
-    swap_wires(graph, "nnf", "z09", z, all_swaps)
-    swap_wires(graph, "nhs", "z20", z, all_swaps)
-    swap_wires(graph, "ddn", "kqh", z, all_swaps)
-    swap_wires(graph, "wrc", "z34", z, all_swaps)
-
-    # populates all nodes with translations
     x[-1].translate()
+    for _ in range(4):
+        k = 0
+        while k < len(z) and (
+            z[k].translated == ("z", k) or z[k].translated == ("raw", 0)
+        ):
+            k += 1
+        if k >= len(z) - 1:
+            raise ValueError("Failed to solve")
 
-    # check that x + y works with num_bits(x) <= 1, num_bits(y) <= 1
-    for node in itertools.chain(x, y):
-        node.info = False
-    for k in range(len(x)):
-        wrong_z = set()
-        for a, b, carry in itertools.product(*[[False, True]] * 3):
-            for node in z:
-                node.reset()
+        # wrongly wired gates need to be correct gates that are not recognized
+        # in their current location, i.e. ancestor nodes of unkown nodes.
+        unkown_nodes = []
+        for node, _ in dfs([z[k], z[k + 1]], reversed=True):
+            if node.translate()[0] == "unk":
+                unkown_nodes.append(node)
+        candidate_nodes = [
+            prev
+            for node in unkown_nodes
+            for prev in node.get_neighbors(reverse=True)
+            if prev.translate()[0] != "unk"
+        ]
 
-            x[k].info = a
-            y[k].info = b
-            if k == 0:
-                if carry:
-                    continue
-            else:
-                x[k - 1].info = carry
-                y[k - 1].info = carry
-            actual_num = sum(node.get() << l for l, node in enumerate(z))
-            expected_num = (a + b + carry) << k
+        # if we find a node that contains (z, k) that is sufficient to know a
+        # swap, since (z, k) allways needs to be f"z{k:02}".
+        direct_z_swap = [
+            node for node in candidate_nodes if node.translate() == ("z", k)
+        ]
+        if len(direct_z_swap) == 1:
+            node_a, node_b = z[k], direct_z_swap[0]
+            print(f"Swapping {node_a.idx} and {node_b.idx}")
+            swap_wires(graph, node_a.idx, node_b.idx, z, all_swaps)
+            continue
 
-            if actual_num != expected_num:
-                actual = bin(actual_num)[2:]
-                expected = bin(expected_num)[2:]
-                actual = actual.zfill(len(z))
-                expected = expected.zfill(len(z))
-                print(
-                    f"Expected & Actual output:\n{expected}\n{actual}\n"
-                    f"For {k=}, a={a}, b={b}, {carry=}."
-                )
+        # try all possible swaps
+        solved = False
+        for k, node_a in enumerate(candidate_nodes):
+            for node_b in candidate_nodes[k + 1 :]:
+                swap_wires(graph, node_a.idx, node_b.idx, z, [])
+                if z[k].translate() == ("z", k):
+                    print(f"Swapping {node_a.idx} and {node_b.idx}")
+                    all_swaps.append(node_a.idx)
+                    all_swaps.append(node_b.idx)
+                    solved = True
+                    break
+                else:
+                    swap_wires(graph, node_a.idx, node_b.idx, z, [])
+            if solved:
+                break
 
-                for l, (val_expected, val_actual) in enumerate(
-                    zip(expected[::-1], actual[::-1])
-                ):
-                    if val_expected != val_actual:
-                        wrong_z.add(l)
+        if not solved:
+            raise ValueError("Failed to solve")
 
-        if len(wrong_z) > 0:
-            wrong_z_list = sorted(wrong_z)
-            for l in wrong_z_list:
-                print(str(z[l]))
-                print("----")
-            return None
-        x[k].info = False
-        y[k].info = False
-        if k > 0:
-            x[k - 1].info = False
-            y[k - 1].info = False
+    # check that our swaps were actually sucessfull
+    for k in range(1, len(z) - 1):
+        if z[k].translate() != ("z", k):
+            raise ValueError("Failed to solve")
+    if z[0].translate() != ("raw", 0) or z[-1].translate() != ("carry", len(z) - 1):
+            raise ValueError("Failed to solve")
 
     return ",".join(sorted(all_swaps))
 
