@@ -1,5 +1,6 @@
 from typing import Iterable
 
+from aoc_helper.linked_list import LinkedNode
 from aoc_helper.utils import load_lines, ExclusiveTimeIt
 
 timeit = ExclusiveTimeIt()
@@ -43,45 +44,46 @@ def task1(line: list[int]) -> int:
 
 @timeit
 def task2(line: list[tuple[int, int]]) -> int:
-    line = line[:]  # don't change the reference
-    k = len(line) - 1
-    while k > 0:
-        x, l = line[k]
+    start = None
+    end = None
+    for el in line:
+        if end is None:
+            start = LinkedNode(el)
+            end = start
+        else:
+            end = end.insert(el)
+    assert start is not None and end is not None
+
+    for node_a in end.reversed():
+        x, l = node_a.value
         if x == -1:
-            k -= 1
             continue
 
-        for idx, (y, s) in enumerate(line):
+        for node_b in start:
+            if node_a is node_b:
+                break
+
+            y, s = node_b.value
             if y != -1:
                 continue
             elif s < l:
                 continue
-            elif k <= idx:
-                # keep continuing to trigger else
-                continue
 
-            line[idx] = (x, l)
+            node_b.value = (x, l)
             # we don't need to verify if we can simplify the compact
             # represention, e.g. merge adjacent empty blocks, here since
             # the start conditions guarantees that both adjacent blocks are
             # non-empty and the algorithm doesn't change it inside our search
             # range
-            line[k] = (-1, l)
+            node_a.value = (-1, l)
             if l < s:
                 # we don't need to merge here, since there might be empty
                 # adjacent blocks here, but they are outside our search radius.
                 # This is only updated for the score calulcation.
-                # TODO: this operation is probably slowing down everything,
-                # should be replaced with a more efficient data structure for
-                # this problem, e.g. a linked list
-                line.insert(idx + 1, (-1, s - l))
-            if l == s:
-                k -= 1
+                node_b.insert((-1, s - l))
             break
-        else:
-            k -= 1
 
-    return calc_score(x for (x, l) in line for _ in range(l))
+    return calc_score(node.value[0] for node in start for _ in range(node.value[1]))
 
 
 def main(fn: str):
