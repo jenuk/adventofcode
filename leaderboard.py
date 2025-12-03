@@ -31,7 +31,10 @@ def json_to_dataframe(data_json: dict, year: int) -> pd.DataFrame:
             continue
         index.append(member["name"])
         for key in other_keys:
-            data[key].append(member[key])
+            if key in member:
+                data[key].append(member[key])
+            else:
+                data[key].append(None)
         completions = member["completion_day_level"]
         for k in range(1, 26):
             start_time = (datetime(year, 12, k) + timedelta(hours=6)).timestamp()
