@@ -17,12 +17,12 @@ def bisect_biggest(a, b, check) -> int:
 
 
 class Interval:
-    def __init__(self, a: float | int, b: float | int):
+    def __init__(self, a: int, b: int):
         self.a = a
         self.b = b
 
     def __contains__(self, num) -> bool:
-        if not isinstance(num, (float, int)):
+        if not isinstance(num, int):
             return False
 
         return self.a <= num <= self.b
@@ -37,10 +37,15 @@ class Interval:
 class UnionOfIntervals:
     def __init__(self, intervals: list[Interval] | None = None):
         self.intervals: list[Interval] = []
+
         if intervals:
             intervals.sort(key=lambda interval: interval.a)
-            for interval in intervals:
-                self.add_interval(interval)
+            self.intervals.append(intervals[0])
+            for interval in intervals[1:]:
+                if (merge := interval.merge(self.intervals[-1])) is not None:
+                    self.intervals[-1] = merge
+                else:
+                    self.intervals.append(interval)
 
     def add_interval(self, interval: Interval):
         if len(self.intervals) == 0:
@@ -80,7 +85,7 @@ class UnionOfIntervals:
             self.intervals.insert(index + 1, interval)
 
     def __contains__(self, num) -> bool:
-        if not isinstance(num, (float, int)):
+        if not isinstance(num, int):
             return False
 
         if len(self.intervals) == 0 or num < self.intervals[0].a:
@@ -117,9 +122,8 @@ def task1(uoi: UnionOfIntervals, inventory: list[int]) -> int:
 def task2(uoi: UnionOfIntervals, inventory: list[int]) -> int:
     result = 0
     for interval in uoi.intervals:
-        # we know that these are always ints, but I just want to make my type
-        # checker happy
-        result += int(interval.b - interval.a + 1)
+        # both ends are inclusive, add 1
+        result += interval.b - interval.a + 1
     return result
 
 
