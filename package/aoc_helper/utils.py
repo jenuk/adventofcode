@@ -1,6 +1,7 @@
 import functools
 import sys
 import time
+from contextlib import contextmanager
 from typing import Callable
 
 __all__ = ["timeit", "load_lines"]
@@ -64,6 +65,32 @@ class ExclusiveTimeIt:
             return out
 
         return inner_func
+
+
+@contextmanager
+def with_timing(name: str):
+    t0 = time.perf_counter_ns()
+    try:
+        yield None
+    finally:
+        t1 = time.perf_counter_ns()
+        print(f"Call {name} took {format_ns(t1 - t0)}")
+
+
+class MultiTimer:
+    def __init__(self, name: str):
+        self.total_time = 0
+        self.start_time = 0
+        self.name = name
+
+    def __enter__(self):
+        self.start_time = time.perf_counter_ns()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.total_time += time.perf_counter_ns() - self.start_time
+
+    def __str__(self) -> str:
+        return f"Timer {self.name} took {format_ns(self.total_time)} in total"
 
 
 def load_lines(filename: str) -> list[str]:

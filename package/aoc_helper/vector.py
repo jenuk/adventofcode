@@ -13,6 +13,11 @@ def vec_op(
     return tuple(op(a, b) for a, b in zip(vector_a, vector_b))
 
 
-def euclidean(vector_a: tuple[int, ...], vector_b: tuple[int, ...]) -> float:
+def euclidean_distance(vector_a: tuple[int, ...], vector_b: tuple[int, ...]) -> float:
     diff = vec_op(vector_a, vector_b, operator.sub)
     return math.sqrt(sum(x**2 for x in diff))
+
+
+def euclidean_distance_sq(vector_a: tuple[int, ...], vector_b: tuple[int, ...]) -> int:
+    diff = vec_op(vector_a, vector_b, operator.sub)
+    return sum(x**2 for x in diff)
