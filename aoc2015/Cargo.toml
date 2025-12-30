@@ -1,0 +1,18 @@
+bin = [
+  { name = "day01", path = "day01/main.rs" },
+  { name = "day02", path = "day02/main.rs" },
+  { name = "day03", path = "day03/main.rs" },
+  { name = "day04", path = "day04/main.rs" },
+  { name = "day05", path = "day05/main.rs" },
+]
+
+[package]
+name = "aoc2015"
+version = "0.1.0"
+edition = "2021"
+
+[profile.dev]
+debug = true
+
+[dependencies]
+md5 = "0.8.0"
